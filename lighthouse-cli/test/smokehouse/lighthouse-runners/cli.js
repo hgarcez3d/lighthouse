@@ -12,16 +12,15 @@
  * them.
  */
 
-const fs = require('fs').promises;
-const os = require('os');
-const {promisify} = require('util');
+import {promises as fs} from 'fs';
+import os from 'os';
+import {promisify} from 'util';
+import log from 'lighthouse-logger';
+import assetSaver from '../../../../lighthouse-core/lib/asset-saver.js';
+import {LocalConsole} from '../lib/local-console.js';
+import {ChildProcessError} from '../lib/child-process-error.js';
+
 const execFileAsync = promisify(require('child_process').execFile);
-
-const log = require('lighthouse-logger');
-
-const assetSaver = require('../../../../lighthouse-core/lib/asset-saver.js');
-const LocalConsole = require('../lib/local-console.js');
-const ChildProcessError = require('../lib/child-process-error.js');
 
 /**
  * Launch Chrome and do a full Lighthouse run via the Lighthouse CLI.
@@ -142,6 +141,6 @@ async function internalRun(url, tmpPath, configJson, options) {
   };
 }
 
-module.exports = {
-  runLighthouse,
+export {
+  runLighthouse
 };

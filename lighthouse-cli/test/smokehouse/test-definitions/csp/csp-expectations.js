@@ -114,8 +114,8 @@ const blockAll = {
   },
 };
 
-module.exports = {
+export {
   allowAll,
   blockAllM91,
-  blockAll,
+  blockAll
 };

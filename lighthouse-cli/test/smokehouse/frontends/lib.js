@@ -13,9 +13,9 @@
 
 /* eslint-disable no-console */
 
-const cloneDeep = require('lodash.clonedeep');
-const smokeTests = require('../test-definitions/core-tests.js');
-const {runSmokehouse} = require('../smokehouse.js');
+import cloneDeep from 'lodash.clonedeep';
+import {smokeTests} from '../test-definitions/core-tests.js';
+import {runSmokehouse} from '../smokehouse.js';
 
 /**
  * @param {Smokehouse.SmokehouseLibOptions} options
@@ -43,4 +43,4 @@ async function smokehouse(options) {
   return runSmokehouse(modifiedTests, smokehouseOptions);
 }
 
-module.exports = smokehouse;
+export {smokehouse};

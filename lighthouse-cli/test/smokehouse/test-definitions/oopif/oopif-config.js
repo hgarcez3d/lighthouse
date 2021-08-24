@@ -5,11 +5,8 @@
  */
 'use strict';
 
-/**
- * @type {LH.Config.Json}
- * Config file for running the OOPIF tests
- */
-module.exports = {
+/** @type {LH.Config.Json} */
+const config = {
   extends: 'lighthouse:default',
   settings: {
     // This test runs in CI and hits the outside network of a live site.
@@ -26,3 +23,5 @@ module.exports = {
     },
   ],
 };
+
+export default config;

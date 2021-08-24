@@ -5,7 +5,7 @@
  */
 'use strict';
 
-const fs = require('fs');
+import fs from 'fs';
 
 const mapJson =
   fs.readFileSync(`${__dirname}/../../../fixtures/source-map/script.js.map`, 'utf-8');
@@ -40,4 +40,4 @@ const expectations = {
   },
 };
 
-module.exports = expectations;
+export {expectations};

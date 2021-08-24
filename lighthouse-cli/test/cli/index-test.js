@@ -6,21 +6,23 @@
 'use strict';
 
 /* eslint-env jest */
-const assert = require('assert').strict;
-const childProcess = require('child_process');
-const path = require('path');
-const indexPath = path.resolve(__dirname, '../../index.js');
-const spawnSync = childProcess.spawnSync;
+
+import {strict as assert} from 'assert';
+import {spawnSync} from 'child_process';
+import {LH_ROOT} from '../../../root.js';
+
+const indexPath = `${LH_ROOT}/lighthouse-cli/index.js`;
 
 describe('CLI Tests', function() {
   it('fails if a url is not provided', () => {
-    const ret = spawnSync('node', [indexPath], {encoding: 'utf8'});
+    const ret = spawnSync('node', ['--experimental-vm-modules', indexPath], {encoding: 'utf8'});
     assert.ok(ret.stderr.includes('Please provide a url'));
     assert.equal(ret.status, 1);
   });
 
   it('should list options via --help', () => {
-    const ret = spawnSync('node', [indexPath, '--help'], {encoding: 'utf8', maxBuffer: 10_000_000});
+    const ret = spawnSync('node', [
+      '--experimental-vm-modules', indexPath, '--help'], {encoding: 'utf8', maxBuffer: 10_000_000});
     expect(ret.stdout).toContain('lighthouse <url>');
     expect(ret.stdout).toContain('Examples:');
     // FIXME: yargs does not wait to flush stdout before exiting the process,
@@ -29,7 +31,8 @@ describe('CLI Tests', function() {
   });
 
   it('should list all audits without a url and exit immediately after', () => {
-    const ret = spawnSync('node', [indexPath, '--list-all-audits'], {encoding: 'utf8'});
+    const ret = spawnSync('node', [
+      '--experimental-vm-modules', indexPath, '--list-all-audits'], {encoding: 'utf8'});
 
     const output = JSON.parse(ret.stdout);
     assert.ok(Array.isArray(output.audits));
@@ -37,7 +40,8 @@ describe('CLI Tests', function() {
   });
 
   it('accepts just the list-trace-categories flag and exit immediately after', () => {
-    const ret = spawnSync('node', [indexPath, '--list-trace-categories'], {encoding: 'utf8'});
+    const ret = spawnSync('node', [
+      '--experimental-vm-modules', indexPath, '--list-trace-categories'], {encoding: 'utf8'});
 
     const output = JSON.parse(ret.stdout);
     assert.ok(Array.isArray(output.traceCategories));
@@ -46,7 +50,9 @@ describe('CLI Tests', function() {
 
   describe('extra-headers', () => {
     it('should exit with a error if the path is not valid', () => {
-      const ret = spawnSync('node', [indexPath, 'https://www.google.com',
+      const ret = spawnSync('node', [
+        '--experimental-vm-modules',
+        indexPath, 'https://www.google.com',
         '--extra-headers=./fixtures/extra-headers/not-found.json'], {encoding: 'utf8'});
 
       assert.ok(ret.stderr.includes('no such file or directory'));
@@ -54,16 +60,19 @@ describe('CLI Tests', function() {
     });
 
     it('should exit with a error if the file does not contain valid JSON', () => {
-      const ret = spawnSync('node', [indexPath, 'https://www.google.com',
+      const ret = spawnSync('node', [
+        '--experimental-vm-modules',
+        indexPath, 'https://www.google.com',
         '--extra-headers',
-        path.resolve(__dirname, '../fixtures/extra-headers/invalid.txt')], {encoding: 'utf8'});
+        `${LH_ROOT}/lighthouse-cli/test/fixtures/extra-headers/invalid.txt`], {encoding: 'utf8'});
 
       assert.ok(ret.stderr.includes('Unexpected token'));
       assert.equal(ret.status, 1);
     });
 
     it('should exit with a error if the passsed in string is not valid JSON', () => {
-      const ret = spawnSync('node', [indexPath, 'https://www.google.com',
+      const ret = spawnSync('node', [
+        '--experimental-vm-modules', indexPath, 'https://www.google.com',
         '--extra-headers', '{notjson}'], {encoding: 'utf8'});
 
       assert.ok(ret.stderr.includes('Unexpected token'));
@@ -73,7 +82,8 @@ describe('CLI Tests', function() {
 
   describe('print-config', () => {
     it('should print the default config and exit immediately after', () => {
-      const ret = spawnSync('node', [indexPath, '--print-config'], {encoding: 'utf8'});
+      const ret = spawnSync('node', [
+        '--experimental-vm-modules', indexPath, '--print-config'], {encoding: 'utf8'});
 
       const config = JSON.parse(ret.stdout);
       assert.strictEqual(config.settings.output[0], 'html');
@@ -88,7 +98,8 @@ describe('CLI Tests', function() {
         '--output', 'json',
         '--only-audits', 'metrics',
       ];
-      const ret = spawnSync('node', [indexPath, ...flags], {encoding: 'utf8'});
+      const ret = spawnSync('node', [
+        '--experimental-vm-modules', indexPath, ...flags], {encoding: 'utf8'});
 
       const config = JSON.parse(ret.stdout);
       assert.strictEqual(config.settings.output[0], 'json');
@@ -101,7 +112,8 @@ describe('CLI Tests', function() {
 
   describe('preset', () => {
     it('desktop should set appropriate config', () => {
-      const ret = spawnSync('node', [indexPath, '--print-config', '--preset=desktop'], {
+      const ret = spawnSync('node', [
+        '--experimental-vm-modules', indexPath, '--print-config', '--preset=desktop'], {
         encoding: 'utf8',
       });
 

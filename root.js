@@ -5,4 +5,22 @@
  */
 'use strict';
 
-module.exports.LH_ROOT = __dirname;
+const path = require('path');
+const url = require('url');
+
+/**
+ * Fill-in for __dirname in modules.
+ *
+ * `import.meta` can be passed in from a module regardless of tsc warnings that
+ * `--module` is required.
+ * @param {ImportMeta} importMeta
+ * @return {string}
+ */
+function dirname(importMeta) {
+  return path.dirname(url.fileURLToPath(importMeta.url));
+}
+
+module.exports = {
+  LH_ROOT: __dirname,
+  dirname,
+};

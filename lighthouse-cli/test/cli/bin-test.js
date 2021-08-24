@@ -7,40 +7,51 @@
 
 /* eslint-env jest */
 
-jest.mock('../../run.js', () => ({runLighthouse: jest.fn()}));
-jest.mock('../../cli-flags.js', () => ({getFlags: jest.fn()}));
-jest.mock('../../sentry-prompt.js', () => ({askPermission: jest.fn()}));
-jest.mock('../../../lighthouse-core/lib/sentry.js', () => ({init: jest.fn()}));
-jest.mock('lighthouse-logger', () => ({setLevel: jest.fn()}));
-jest.mock('update-notifier', () => () => ({notify: () => {}}));
+import {jest} from '@jest/globals';
+import * as bin from '../../bin.js';
 
-const bin = require('../../bin.js');
+const mockRunLighthouse = jest.fn();
+jest.mock('../../run.js', () => {
+  return {runLighthouse: mockRunLighthouse};
+});
 
-/** @type {jest.Mock} */
-let getCLIFlagsFn;
-/** @type {jest.Mock} */
-let runLighthouseFn;
-/** @type {jest.Mock} */
-let setLogLevelFn;
-/** @type {jest.Mock} */
-let askSentryPermissionFn;
-/** @type {jest.Mock} */
-let initSentryFn;
+const mockGetFlags = jest.fn();
+jest.mock('../../cli-flags.js', () => {
+  return {getFlags: mockGetFlags};
+});
+
+const mockAskPermission = jest.fn();
+jest.mock('../../sentry-prompt.js', () => {
+  return {askPermission: mockAskPermission};
+});
+
+const mockSentryInit = jest.fn();
+jest.mock('../../../lighthouse-core/lib/sentry.js', () => {
+  return {init: mockSentryInit};
+});
+
+const mockLoggerSetLevel = jest.fn();
+jest.mock('lighthouse-logger', () => {
+  return {setLevel: mockLoggerSetLevel};
+});
+
+const mockNotify = jest.fn();
+jest.mock('update-notifier', () => {
+  return {notify: mockNotify};
+});
+
 /** @type {LH.CliFlags} */
 let cliFlags;
 
-beforeEach(() => {
-  getCLIFlagsFn = /** @type {*} */ (require('../../cli-flags.js').getFlags);
-  runLighthouseFn = /** @type {*} */ (require('../../run.js').runLighthouse);
-  setLogLevelFn = /** @type {*} */ (require('lighthouse-logger').setLevel);
-  askSentryPermissionFn = /** @type {*} */ (require('../../sentry-prompt.js').askPermission);
-  initSentryFn = /** @type {*} */ (require('../../../lighthouse-core/lib/sentry.js').init);
+beforeEach(async () => {
+  mockAskPermission.mockReset();
+  mockGetFlags.mockReset();
+  mockLoggerSetLevel.mockReset();
+  mockNotify.mockReset();
+  mockRunLighthouse.mockReset();
+  mockSentryInit.mockReset();
 
-  runLighthouseFn.mockReset();
-  askSentryPermissionFn.mockReset();
-  initSentryFn.mockReset();
-
-  runLighthouseFn.mockResolvedValue({});
+  mockRunLighthouse.mockResolvedValue({});
 
   cliFlags = {
     _: ['http://example.com'],
@@ -61,14 +72,15 @@ beforeEach(() => {
     printConfig: false,
   };
 
-  getCLIFlagsFn.mockReset();
-  getCLIFlagsFn.mockImplementation(() => cliFlags);
+  // TODO: doesn't seem to be working
+  mockGetFlags.mockResolvedValue(cliFlags);
+  // mockGetFlags.mockImplementation(() => cliFlags);
 });
 
 describe('CLI bin', function() {
   function getRunLighthouseArgs() {
-    expect(runLighthouseFn).toHaveBeenCalled();
-    return runLighthouseFn.mock.calls[0];
+    expect(mockRunLighthouse).toHaveBeenCalled();
+    return mockRunLighthouse.mock.calls[0];
   }
 
   it('should run without failure', async () => {
@@ -87,7 +99,7 @@ describe('CLI bin', function() {
 
     it('should load the config from the preset', async () => {
       cliFlags = {...cliFlags, preset: 'experimental'};
-      const actualConfig = require('../../../lighthouse-core/config/experimental-config.js');
+      const actualConfig = await import('../../../lighthouse-core/config/experimental-config.js');
       await bin.begin();
 
       expect(getRunLighthouseArgs()[2]).toEqual(actualConfig);
@@ -108,19 +120,19 @@ describe('CLI bin', function() {
   describe('logging', () => {
     it('should have info by default', async () => {
       await bin.begin();
-      expect(setLogLevelFn).toHaveBeenCalledWith('info');
+      expect(mockLoggerSetLevel).toHaveBeenCalledWith('info');
     });
 
     it('should respect verbose', async () => {
       cliFlags = {...cliFlags, verbose: true};
       await bin.begin();
-      expect(setLogLevelFn).toHaveBeenCalledWith('verbose');
+      expect(mockLoggerSetLevel).toHaveBeenCalledWith('verbose');
     });
 
     it('should respect quiet', async () => {
       cliFlags = {...cliFlags, quiet: true};
       await bin.begin();
-      expect(setLogLevelFn).toHaveBeenCalledWith('silent');
+      expect(mockLoggerSetLevel).toHaveBeenCalledWith('silent');
     });
   });
 
@@ -169,28 +181,28 @@ describe('CLI bin', function() {
     it('should request permission when no preference set', async () => {
       await bin.begin();
 
-      expect(askSentryPermissionFn).toHaveBeenCalled();
+      expect(mockAskPermission).toHaveBeenCalled();
     });
 
     it('should not request permission when preference set', async () => {
       cliFlags = {...cliFlags, enableErrorReporting: false};
       await bin.begin();
 
-      expect(askSentryPermissionFn).not.toHaveBeenCalled();
+      expect(mockAskPermission).not.toHaveBeenCalled();
     });
 
     it('should initialize sentry when enabled', async () => {
       cliFlags = {...cliFlags, enableErrorReporting: true};
       await bin.begin();
 
-      expect(initSentryFn).toHaveBeenCalled();
+      expect(mockSentryInit).toHaveBeenCalled();
     });
 
     it('should not initialize sentry when disabled', async () => {
       cliFlags = {...cliFlags, enableErrorReporting: false};
       await bin.begin();
 
-      expect(initSentryFn).not.toHaveBeenCalled();
+      expect(mockSentryInit).not.toHaveBeenCalled();
     });
   });
 });

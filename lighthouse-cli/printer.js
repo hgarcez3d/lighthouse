@@ -5,8 +5,8 @@
  */
 'use strict';
 
-const fs = require('fs');
-const log = require('lighthouse-logger');
+import * as fs from 'fs';
+import log from 'lighthouse-logger';
 
 /**
  * An enumeration of acceptable output modes:
@@ -91,9 +91,9 @@ function getValidOutputOptions() {
   return Object.keys(OutputMode);
 }
 
-module.exports = {
+export {
   checkOutputPath,
   write,
   OutputMode,
-  getValidOutputOptions,
+  getValidOutputOptions
 };

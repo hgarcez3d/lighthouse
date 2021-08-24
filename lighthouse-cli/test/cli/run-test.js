@@ -6,12 +6,14 @@
 'use strict';
 
 /* eslint-env jest */
-const assert = require('assert').strict;
-const path = require('path');
-const fs = require('fs');
-const run = require('../../run.js');
-const parseChromeFlags = require('../../run.js').parseChromeFlags;
-const {LH_ROOT} = require('../../../root.js');
+
+import {jest} from '@jest/globals';
+import {strict as assert} from 'assert';
+import path from 'path';
+import fs from 'fs';
+import * as run from '../../run.js';
+import {parseChromeFlags} from '../../run.js';
+import {LH_ROOT} from '../../../root.js';
 
 /** @type {LH.Config.Json} */
 const testConfig = {
@@ -27,7 +29,7 @@ jest.mock('lighthouse-plugin-simple', () => {
   return require('../../../lighthouse-core/test/fixtures/config-plugins/lighthouse-plugin-simple/plugin-simple.js');
 }, {virtual: true});
 
-const getFlags = require('../../cli-flags.js').getFlags;
+import {getFlags} from '../../cli-flags.js';
 
 describe('CLI run', function() {
   describe('runLighthouse runs Lighthouse as a node module', () => {

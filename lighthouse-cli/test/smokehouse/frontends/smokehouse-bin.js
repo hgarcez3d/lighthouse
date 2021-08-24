@@ -13,12 +13,12 @@
 
 /* eslint-disable no-console */
 
-const path = require('path');
-const cloneDeep = require('lodash.clonedeep');
-const yargs = require('yargs');
-const log = require('lighthouse-logger');
-const {runSmokehouse} = require('../smokehouse.js');
-const {updateTestDefnFormat} = require('./back-compat-util.js');
+import path from 'path';
+import cloneDeep from 'lodash.clonedeep';
+import yargs from 'yargs';
+import log from 'lighthouse-logger';
+import {runSmokehouse} from '../smokehouse.js';
+import {updateTestDefnFormat} from './back-compat-util.js';
 
 const coreTestDefnsPath = path.join(__dirname, '../test-definitions/core-tests.js');
 

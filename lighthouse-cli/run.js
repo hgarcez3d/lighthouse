@@ -7,22 +7,19 @@
 
 /* eslint-disable no-console */
 
-const path = require('path');
-const psList = require('ps-list');
-
-const Printer = require('./printer.js');
-const ChromeLauncher = require('chrome-launcher');
-
-const yargsParser = require('yargs-parser');
-const lighthouse = require('../lighthouse-core/index.js');
-const log = require('lighthouse-logger');
-const getFilenamePrefix = require('../report/generator/file-namer.js').getFilenamePrefix;
-const assetSaver = require('../lighthouse-core/lib/asset-saver.js');
-const URL = require('../lighthouse-core/lib/url-shim.js');
-
-const open = require('open');
-
 /** @typedef {Error & {code: string, friendlyMessage?: string}} ExitError */
+
+import * as path from 'path';
+import psList from 'ps-list';
+import * as Printer from './printer.js';
+import * as ChromeLauncher from 'chrome-launcher';
+import yargsParser from 'yargs-parser';
+import lighthouse from '../lighthouse-core/index.js';
+import log from 'lighthouse-logger';
+import {getFilenamePrefix} from '../report/generator/file-namer.js';
+import * as assetSaver from '../lighthouse-core/lib/asset-saver.js';
+import URL from '../lighthouse-core/lib/url-shim.js';
+import open from 'open';
 
 const _RUNTIME_ERROR_CODE = 1;
 const _PROTOCOL_TIMEOUT_EXIT_CODE = 67;
@@ -272,8 +269,8 @@ async function runLighthouse(url, flags, config) {
   }
 }
 
-module.exports = {
+export {
   parseChromeFlags,
   saveResults,
-  runLighthouse,
+  runLighthouse
 };
