@@ -98,6 +98,7 @@ function printRuntimeErrorAndExit(err) {
   if (err.stack) {
     console.error(err.stack);
   }
+  debugger;
   return process.exit(_RUNTIME_ERROR_CODE);
 }
 
@@ -200,8 +201,8 @@ async function potentiallyKillChrome(launchedChrome) {
  * @return {Promise<LH.RunnerResult|undefined>}
  */
 async function runLighthouseWithFraggleRock(url, flags, config, launchedChrome) {
-  const fraggleRock = require('../lighthouse-core/fraggle-rock/api.js');
-  const puppeteer = require('puppeteer');
+  const fraggleRock = (await import('../lighthouse-core/fraggle-rock/api.js')).default;
+  const puppeteer = (await import('puppeteer')).default;
   const browser = await puppeteer.connect({browserURL: `http://localhost:${launchedChrome.port}`});
   const page = await browser.newPage();
   flags.channel = 'fraggle-rock-cli';

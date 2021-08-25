@@ -11,32 +11,32 @@ import {jest} from '@jest/globals';
 import * as bin from '../../bin.js';
 
 const mockRunLighthouse = jest.fn();
-jest.mock('../../run.js', () => {
+jest.mockModule('../../run.js', () => {
   return {runLighthouse: mockRunLighthouse};
 });
 
 const mockGetFlags = jest.fn();
-jest.mock('../../cli-flags.js', () => {
+jest.mockModule('../../cli-flags.js', () => {
   return {getFlags: mockGetFlags};
 });
 
 const mockAskPermission = jest.fn();
-jest.mock('../../sentry-prompt.js', () => {
+jest.mockModule('../../sentry-prompt.js', () => {
   return {askPermission: mockAskPermission};
 });
 
 const mockSentryInit = jest.fn();
-jest.mock('../../../lighthouse-core/lib/sentry.js', () => {
+jest.mockModule('../../../lighthouse-core/lib/sentry.js', () => {
   return {init: mockSentryInit};
 });
 
 const mockLoggerSetLevel = jest.fn();
-jest.mock('lighthouse-logger', () => {
+jest.mockModule('lighthouse-logger', () => {
   return {setLevel: mockLoggerSetLevel};
 });
 
 const mockNotify = jest.fn();
-jest.mock('update-notifier', () => {
+jest.mockModule('update-notifier', () => {
   return {notify: mockNotify};
 });
 
@@ -83,7 +83,7 @@ describe('CLI bin', function() {
     return mockRunLighthouse.mock.calls[0];
   }
 
-  it('should run without failure', async () => {
+  it.only('should run without failure', async () => {
     await bin.begin();
   });
 
