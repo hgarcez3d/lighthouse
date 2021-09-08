@@ -11,8 +11,6 @@ import {strict as assert} from 'assert';
 import path from 'path';
 import fs from 'fs';
 
-import {jest} from '@jest/globals';
-
 import * as run from '../../run.js';
 import {parseChromeFlags} from '../../run.js';
 import {getFlags} from '../../cli-flags.js';
@@ -25,12 +23,6 @@ const testConfig = {
     'throttlingMethod': 'devtools',
   },
 };
-
-// Map plugin name to fixture since not actually installed in node_modules/.
-jest.mock('lighthouse-plugin-simple', () => {
-  // eslint-disable-next-line max-len
-  return require('../../../lighthouse-core/test/fixtures/config-plugins/lighthouse-plugin-simple/plugin-simple.js');
-}, {virtual: true});
 
 describe('CLI run', function() {
   describe('runLighthouse runs Lighthouse as a node module', () => {
