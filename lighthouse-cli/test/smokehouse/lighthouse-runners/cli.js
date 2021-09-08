@@ -19,8 +19,10 @@ import log from 'lighthouse-logger';
 import assetSaver from '../../../../lighthouse-core/lib/asset-saver.js';
 import {LocalConsole} from '../lib/local-console.js';
 import {ChildProcessError} from '../lib/child-process-error.js';
+import {execFile} from 'child_process';
+import {LH_ROOT} from '../../../../root.js';
 
-const execFileAsync = promisify(require('child_process').execFile);
+const execFileAsync = promisify(execFile);
 
 /**
  * Launch Chrome and do a full Lighthouse run via the Lighthouse CLI.
@@ -68,7 +70,7 @@ async function internalRun(url, tmpPath, configJson, options) {
   const artifactsDirectory = `${tmpPath}/artifacts/`;
 
   const args = [
-    `${__dirname}/../../../index.js`, // 'lighthouse-cli/index.js'
+    `${LH_ROOT}/lighthouse-cli/index.js`,
     `${url}`,
     `--output-path=${outputPath}`,
     '--output=json',

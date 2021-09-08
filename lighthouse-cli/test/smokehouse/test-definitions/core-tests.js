@@ -16,9 +16,11 @@ import * as legacyJavascript from './legacy-javascript/expectations.js';
 import * as metrics from './tricky-metrics/expectations.js';
 import * as mixedContent from './mixed-content/expectations.js';
 import * as offline from './offline-local/offline-expectations.js';
+import * as oopifg from './oopif/oopif-expectations.js';
 import * as perf from './perf/expectations.js';
 import * as pwa from './pwa/pwa-expectations.js';
 import * as pwa2 from './pwa/pwa2-expectations.js';
+import * as pwa3 from './pwa/pwa3-expectations.js';
 import * as redirects from './redirects/expectations.js';
 import * as screenshots from './screenshot/expectations.js';
 import * as seo from './seo/expectations.js';
@@ -64,7 +66,7 @@ const smokeTests = [{
   runSerially: true,
 }, {
   id: 'oopif',
-  expectations: require('./oopif/oopif-expectations.js'),
+  expectations: oopifg.expectations,
   config: oopifConfig,
 }, {
   id: 'pwa-airhorner',
@@ -84,7 +86,7 @@ const smokeTests = [{
   config: pwaConfig,
 }, {
   id: 'pwa-rocks',
-  expectations: require('./pwa/pwa3-expectations.js').pwarocks,
+  expectations: pwa3.pwarocks,
   config: pwaConfig,
 }, {
   id: 'dbw',
@@ -279,4 +281,5 @@ const smokeTests = [{
   config: cspConfig,
 }];
 
-export {smokeTests};
+// TODO: export as named objects? export {screenshot, pwa, pwa2, ...}
+export default smokeTests;

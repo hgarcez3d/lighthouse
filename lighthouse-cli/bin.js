@@ -66,7 +66,12 @@ async function begin() {
   if (cliFlags.configPath) {
     // Resolve the config file path relative to where cli was called.
     cliFlags.configPath = path.resolve(process.cwd(), cliFlags.configPath);
-    configJson = await import(cliFlags.configPath);
+
+    if (cliFlags.configPath.endsWith('.json')) {
+      configJson = JSON.parse(fs.readFileSync(cliFlags.configPath, 'utf-8'));
+    } else {
+      configJson = await import(cliFlags.configPath);
+    }
   } else if (cliFlags.preset) {
     configJson = await import(`../lighthouse-core/config/${cliFlags.preset}-config.js`);
   }
