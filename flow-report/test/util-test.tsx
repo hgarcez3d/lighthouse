@@ -5,30 +5,34 @@
  */
 
 import fs from 'fs';
-import {FlowResultContext, useCurrentLhr} from '../src/util';
+import {dirname} from 'path';
+import {fileURLToPath} from 'url';
+
 import {renderHook} from '@testing-library/preact-hooks';
 import {FunctionComponent} from 'preact';
 import {act} from 'preact/test-utils';
 
+import {FlowResultContext, useCurrentLhr, useDerivedStepNames} from '../src/util';
+
 const flowResult: LH.FlowResult = JSON.parse(
   fs.readFileSync(
-    `${__dirname}/../../lighthouse-core/test/fixtures/fraggle-rock/reports/sample-lhrs.json`,
+    // eslint-disable-next-line max-len
+    `${dirname(fileURLToPath(import.meta.url))}/../../lighthouse-core/test/fixtures/fraggle-rock/reports/sample-lhrs.json`,
     'utf-8'
   )
 );
 
+let wrapper: FunctionComponent;
+
+beforeEach(() => {
+  wrapper = ({children}) => (
+    <FlowResultContext.Provider value={flowResult}>{children}</FlowResultContext.Provider>
+  );
+});
+
 describe('useCurrentLhr', () => {
-  let wrapper: FunctionComponent;
-
-  beforeEach(() => {
-    window.location.hash = '';
-    wrapper = ({children}) => (
-      <FlowResultContext.Provider value={flowResult}>{children}</FlowResultContext.Provider>
-    );
-  });
-
   it('gets current lhr index from url hash', () => {
-    window.location.hash = '#index=1';
+    global.location.hash = '#index=1';
     const {result} = renderHook(() => useCurrentLhr(), {wrapper});
     expect(result.current).toEqual({
       index: 1,
@@ -37,7 +41,7 @@ describe('useCurrentLhr', () => {
   });
 
   it('changes on navigation', async () => {
-    window.location.hash = '#index=1';
+    global.location.hash = '#index=1';
     const render = renderHook(() => useCurrentLhr(), {wrapper});
 
     expect(render.result.current).toEqual({
@@ -46,7 +50,7 @@ describe('useCurrentLhr', () => {
     });
 
     await act(() => {
-      window.location.hash = '#index=2';
+      global.location.hash = '#index=2';
     });
     await render.waitForNextUpdate();
 
@@ -62,14 +66,44 @@ describe('useCurrentLhr', () => {
   });
 
   it('return null if lhr index is out of bounds', () => {
-    window.location.hash = '#index=5';
+    global.location.hash = '#index=5';
     const {result} = renderHook(() => useCurrentLhr(), {wrapper});
     expect(result.current).toBeNull();
   });
 
   it('returns null for invalid value', () => {
-    window.location.hash = '#index=OHNO';
+    global.location.hash = '#index=OHNO';
     const {result} = renderHook(() => useCurrentLhr(), {wrapper});
     expect(result.current).toBeNull();
+  });
+});
+
+describe('useDerivedStepNames', () => {
+  it('counts up for each mode', () => {
+    const {result} = renderHook(() => useDerivedStepNames(), {wrapper});
+    expect(result.current).toEqual([
+      'Navigation report (www.mikescerealshack.co/)',
+      'Timespan report (www.mikescerealshack.co/search)',
+      'Snapshot report (www.mikescerealshack.co/search)',
+      'Navigation report (www.mikescerealshack.co/corrections)',
+    ]);
+  });
+
+  it('enumerates if multiple in same group', () => {
+    const lhrs = flowResult.lhrs;
+    lhrs[3] = lhrs[2];
+    const newFlowResult = {lhrs};
+    const wrapper: FunctionComponent = ({children}) => (
+      <FlowResultContext.Provider value={newFlowResult}>{children}</FlowResultContext.Provider>
+    );
+
+    const {result} = renderHook(() => useDerivedStepNames(), {wrapper});
+
+    expect(result.current).toEqual([
+      'Navigation report (www.mikescerealshack.co/)',
+      'Timespan report (www.mikescerealshack.co/search)',
+      'Snapshot report 1 (www.mikescerealshack.co/search)',
+      'Snapshot report 2 (www.mikescerealshack.co/search)',
+    ]);
   });
 });
