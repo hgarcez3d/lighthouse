@@ -23,6 +23,7 @@
  */
 
 import log from 'lighthouse-logger';
+
 import {runLighthouse as cliLighthouseRunner} from './lighthouse-runners/cli.js';
 import {getAssertionReport} from './report-assert.js';
 import {LocalConsole} from './lib/local-console.js';

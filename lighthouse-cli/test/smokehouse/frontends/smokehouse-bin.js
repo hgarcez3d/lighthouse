@@ -14,10 +14,12 @@
 /* eslint-disable no-console */
 
 import path from 'path';
+
 import cloneDeep from 'lodash.clonedeep';
 import yargs from 'yargs';
 import * as yargsHelpers from 'yargs/helpers';
 import log from 'lighthouse-logger';
+
 import {runSmokehouse} from '../smokehouse.js';
 import {updateTestDefnFormat} from './back-compat-util.js';
 import {LH_ROOT} from '../../../../root.js';

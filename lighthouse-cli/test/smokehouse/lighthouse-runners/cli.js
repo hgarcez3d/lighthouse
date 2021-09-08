@@ -15,11 +15,13 @@
 import {promises as fs} from 'fs';
 import os from 'os';
 import {promisify} from 'util';
+import {execFile} from 'child_process';
+
 import log from 'lighthouse-logger';
+
 import assetSaver from '../../../../lighthouse-core/lib/asset-saver.js';
 import {LocalConsole} from '../lib/local-console.js';
 import {ChildProcessError} from '../lib/child-process-error.js';
-import {execFile} from 'child_process';
 import {LH_ROOT} from '../../../../root.js';
 
 const execFileAsync = promisify(execFile);

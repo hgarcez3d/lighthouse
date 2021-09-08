@@ -7,8 +7,10 @@
 
 /* eslint-env jest */
 
-import {jest} from '@jest/globals';
 import * as fs from 'fs';
+
+import {jest} from '@jest/globals';
+
 import {LH_ROOT} from '../../../root.js';
 
 const mockRunLighthouse = jest.fn();

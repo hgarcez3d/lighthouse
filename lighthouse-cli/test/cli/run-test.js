@@ -7,12 +7,15 @@
 
 /* eslint-env jest */
 
-import {jest} from '@jest/globals';
 import {strict as assert} from 'assert';
 import path from 'path';
 import fs from 'fs';
+
+import {jest} from '@jest/globals';
+
 import * as run from '../../run.js';
 import {parseChromeFlags} from '../../run.js';
+import {getFlags} from '../../cli-flags.js';
 import {LH_ROOT} from '../../../root.js';
 
 /** @type {LH.Config.Json} */
@@ -28,8 +31,6 @@ jest.mock('lighthouse-plugin-simple', () => {
   // eslint-disable-next-line max-len
   return require('../../../lighthouse-core/test/fixtures/config-plugins/lighthouse-plugin-simple/plugin-simple.js');
 }, {virtual: true});
-
-import {getFlags} from '../../cli-flags.js';
 
 describe('CLI run', function() {
   describe('runLighthouse runs Lighthouse as a node module', () => {

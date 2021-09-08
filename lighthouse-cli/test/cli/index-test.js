@@ -9,6 +9,7 @@
 
 import {strict as assert} from 'assert';
 import {spawnSync} from 'child_process';
+
 import {LH_ROOT} from '../../../root.js';
 
 const indexPath = `${LH_ROOT}/lighthouse-cli/index.js`;

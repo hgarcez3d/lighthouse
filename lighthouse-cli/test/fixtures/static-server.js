@@ -12,12 +12,14 @@ import http from 'http';
 import zlib from 'zlib';
 import path from 'path';
 import fs from 'fs';
-import glob from 'glob';
-import mime from 'mime-types';
 import {parse as parseQueryString} from 'querystring';
 import {parse as parseURL} from 'url';
 import {URLSearchParams} from 'url';
+
+import mime from 'mime-types';
+import glob from 'glob';
 import esMain from 'es-main';
+
 import {LH_ROOT} from '../../../root.js';
 
 const HEADER_SAFELIST = new Set(['x-robots-tag', 'link', 'content-security-policy']);

@@ -25,7 +25,6 @@ import * as redirects from './redirects/expectations.js';
 import * as screenshots from './screenshot/expectations.js';
 import * as seo from './seo/expectations.js';
 import * as sourcemaps from './source-maps/expectations.js';
-
 import a11yConfig from './a11y/a11y-config.js';
 import byteConfig from './byte-efficiency/byte-config.js';
 import cspConfig from './csp/csp-config.js';

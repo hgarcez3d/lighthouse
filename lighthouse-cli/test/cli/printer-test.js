@@ -9,6 +9,7 @@
 
 import {strict as assert} from 'assert';
 import * as fs from 'fs';
+
 import * as Printer from '../../printer.js';
 import sampleResults from '../../../lighthouse-core/test/results/sample_v2.json';
 

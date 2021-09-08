@@ -9,7 +9,9 @@
 
 import {strict as assert} from 'assert';
 import fs from 'fs';
+
 import yargs from 'yargs';
+
 import {getFlags} from '../../cli-flags.js';
 import {LH_ROOT} from '../../../root.js';
 

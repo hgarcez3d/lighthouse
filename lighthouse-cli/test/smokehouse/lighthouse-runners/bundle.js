@@ -12,6 +12,7 @@
  */
 
 import ChromeLauncher from 'chrome-launcher';
+
 import ChromeProtocol from '../../../../lighthouse-core/gather/connections/cri.js';
 
 const originalRequire = global.require;

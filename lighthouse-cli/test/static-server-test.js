@@ -6,7 +6,9 @@
 'use strict';
 
 import fs from 'fs';
+
 import fetch from 'node-fetch';
+
 import {server} from './fixtures/static-server.js';
 
 /* eslint-env jest */

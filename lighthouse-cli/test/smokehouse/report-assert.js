@@ -28,6 +28,7 @@
 
 import cloneDeep from 'lodash.clonedeep';
 import log from 'lighthouse-logger';
+
 import {LocalConsole} from './lib/local-console.js';
 
 const NUMBER_REGEXP = /(?:\d|\.)+/.source;

@@ -20,14 +20,16 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
+
+import log from 'lighthouse-logger';
+import updateNotifier from 'update-notifier';
+
 import * as commands from './commands/commands.js';
 import * as Printer from './printer.js';
 import {getFlags} from './cli-flags.js';
 import {runLighthouse} from './run.js';
 import lighthouse from '../lighthouse-core/index.js';
-import log from 'lighthouse-logger';
 import * as Sentry from '../lighthouse-core/lib/sentry.js';
-import updateNotifier from 'update-notifier';
 import {askPermission} from './sentry-prompt.js';
 import {LH_ROOT} from '../root.js';
 

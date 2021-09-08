@@ -10,16 +10,19 @@
 /** @typedef {Error & {code: string, friendlyMessage?: string}} ExitError */
 
 import * as path from 'path';
+
 import psList from 'ps-list';
-import * as Printer from './printer.js';
 import * as ChromeLauncher from 'chrome-launcher';
 import yargsParser from 'yargs-parser';
-import lighthouse from '../lighthouse-core/index.js';
 import log from 'lighthouse-logger';
+import open from 'open';
+
+import * as Printer from './printer.js';
+import lighthouse from '../lighthouse-core/index.js';
 import {getFilenamePrefix} from '../report/generator/file-namer.js';
 import * as assetSaver from '../lighthouse-core/lib/asset-saver.js';
 import URL from '../lighthouse-core/lib/url-shim.js';
-import open from 'open';
+
 
 const _RUNTIME_ERROR_CODE = 1;
 const _PROTOCOL_TIMEOUT_EXIT_CODE = 67;
@@ -98,7 +101,6 @@ function printRuntimeErrorAndExit(err) {
   if (err.stack) {
     console.error(err.stack);
   }
-  debugger;
   return process.exit(_RUNTIME_ERROR_CODE);
 }
 

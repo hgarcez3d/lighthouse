@@ -8,8 +8,10 @@
 /* eslint-disable max-len */
 
 import * as fs from 'fs';
+
 import yargs from 'yargs';
 import * as yargsHelpers from 'yargs/helpers';
+
 import {isObjectOfUnknownValues} from '../lighthouse-core/lib/type-verifiers.js';
 
 /**
