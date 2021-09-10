@@ -13,6 +13,7 @@
 
 /* eslint-disable no-console */
 
+const assert = require('assert').strict;
 const fs = require('fs');
 const path = require('path');
 const cloneDeep = require('lodash.clonedeep');
@@ -73,6 +74,47 @@ function getDefinitionsToRun(allTestDefns, requestedIds, {invertMatch}) {
   }
 
   return smokes;
+}
+
+/**
+ * Parses the cli `shardArg` flag into `shardNumber/shardTotal`. Splits
+ * `testDefns` into `shardTotal` shards and returns the `shardNumber`th shard.
+ * Shards will differ in size by at most 1.
+ * Shard params must be 1≤shardNumber≤shardTotal.
+ * @param {Array<Smokehouse.TestDfn>} testDefns
+ * @param {string=} shardArg
+ * @return {Array<Smokehouse.TestDfn>}
+ */
+function getShardedDefinitions(testDefns, shardArg) {
+  if (!shardArg) return testDefns;
+
+  const errorMessage = `'shard' must be of the form 'n/d' and n and d must be positive integers with 1≤n≤d. Got '${shardArg}'`;
+  const match = /^(?<shardNumber>\d+)\/(?<shardTotal>\d+)$/.exec(shardArg);
+  assert(match && match.groups, errorMessage);
+  const shardNumber = Number(match.groups.shardNumber);
+  const shardTotal = Number(match.groups.shardTotal);
+  assert(shardNumber > 0 && Number.isInteger(shardNumber), errorMessage);
+  assert(shardTotal > 0 && Number.isInteger(shardTotal));
+  assert(shardNumber <= shardTotal, errorMessage);
+
+  // Array is sharded with `Math.ceil(length / shardTotal)` shards first
+  // and then the remaining `Math.floor(length / shardTotal) shards.
+  // e.g. `[0, 1, 2, 3]` split into 3 shards is `[[0, 1], [2], [3]]`.
+  const biggerShardCount = testDefns.length % shardTotal;
+  let shardDefns;
+  if (shardNumber <= biggerShardCount) {
+    const biggerSize = Math.ceil(testDefns.length / shardTotal);
+    const shardEnd = shardNumber * biggerSize;
+    shardDefns = testDefns.slice(shardEnd - biggerSize, shardEnd);
+  } else {
+    const baseSize = Math.floor(testDefns.length / shardTotal);
+    const shardEnd = shardNumber * baseSize + biggerShardCount;
+    shardDefns = testDefns.slice(shardEnd - baseSize, shardEnd);
+  }
+
+  console.log(`In this shard (${shardArg}), running: ${shardDefns.map(d => d.id).join(' ')}\n`);
+
+  return shardDefns;
 }
 
 /**
@@ -158,6 +200,10 @@ async function begin() {
         default: false,
         describe: 'Run all available tests except the ones provided',
       },
+      'shard': {
+        type: 'string',
+        describe: 'A argument of the form "n/d", which divides the selected tests into d groups and runs the nth group. n and d must be positive integers with 1≤n≤d.',
+      }
     })
     .wrap(yargs.terminalWidth())
     .argv;
@@ -182,7 +228,8 @@ async function begin() {
   const rawTestDefns = require(testDefnPath);
   const allTestDefns = updateTestDefnFormat(rawTestDefns);
   const invertMatch = argv.invertMatch;
-  const testDefns = getDefinitionsToRun(allTestDefns, requestedTestIds, {invertMatch});
+  const requestedTestDefns = getDefinitionsToRun(allTestDefns, requestedTestIds, {invertMatch});
+  const testDefns = getShardedDefinitions(requestedTestDefns, argv.shard);
 
   let smokehouseResult;
   let server;
