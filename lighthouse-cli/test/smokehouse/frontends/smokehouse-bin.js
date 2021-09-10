@@ -18,6 +18,7 @@ import fs from 'fs';
 
 import cloneDeep from 'lodash.clonedeep';
 import yargs from 'yargs';
+// @ts-expect-error: TODO: no types until @types/yargs 16 ... should upgrade yargs first.
 import * as yargsHelpers from 'yargs/helpers';
 import log from 'lighthouse-logger';
 
@@ -118,9 +119,7 @@ function pruneExpectedNetworkRequests(testDefns, takeNetworkRequestUrls) {
  * CLI entry point.
  */
 async function begin() {
-  // @ts-expect-error: Required because of some unclear issue with jest / bin-test.js
-  const hideBin = yargsHelpers.hideBin || yargsHelpers.default.hideBin;
-  const y = yargs(hideBin(process.argv));
+  const y = yargs(yargsHelpers.hideBin(process.argv));
   const rawArgv = y
     .help('help')
     .usage('node $0 [<options>] <test-ids>')

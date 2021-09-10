@@ -10,6 +10,7 @@
 import * as fs from 'fs';
 
 import yargs from 'yargs';
+// @ts-expect-error: TODO: no types until @types/yargs 16 ... should upgrade yargs first.
 import * as yargsHelpers from 'yargs/helpers';
 
 import {isObjectOfUnknownValues} from '../lighthouse-core/lib/type-verifiers.js';
@@ -20,11 +21,10 @@ import {isObjectOfUnknownValues} from '../lighthouse-core/lib/type-verifiers.js'
  * @return {LH.CliFlags}
  */
 function getFlags(manualArgv, options = {}) {
-  /** @type {typeof yargsHelpers.hideBin} */
-  // @ts-expect-error: Required because of some unclear issue with jest / bin-test.js
-  const hideBin = yargsHelpers.hideBin || yargsHelpers.default.hideBin;
-  // @ts-expect-error - undocumented, but yargs() supports parsing a single `string`.
-  const y = manualArgv ? yargs(manualArgv) : yargs(hideBin(process.argv));
+  const y = manualArgv ?
+    // @ts-expect-error - undocumented, but yargs() supports parsing a single `string`.
+    yargs(manualArgv) :
+    yargs(yargsHelpers.hideBin(process.argv));
 
   let parser = y.help('help')
       .showHelpOnFail(false, 'Specify --help for available options')
@@ -340,7 +340,6 @@ function getFlags(manualArgv, options = {}) {
   const argv = parser.argv;
   const cliFlags = /** @type {typeof argv & CamelCasify<typeof argv>} */ (argv);
 
-  // @ts-expect-error: TODO: fix type magic ...
   return cliFlags;
 }
 
