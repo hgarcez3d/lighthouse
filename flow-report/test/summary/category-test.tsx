@@ -49,4 +49,20 @@ describe('SummaryTooltip', () => {
     expect(() => root.getByTestId('SummaryTooltip__rating')).toThrow();
     expect(root.getByText('1 audits passed / 3 audits run')).toBeTruthy();
   });
+
+  it('renders scored category tooltip with score', async () => {
+    // Navigation performance
+    const reportResult = Util.prepareReportResult(flowResult.lhrs[0]);
+    const category = reportResult.categories['performance'];
+
+    const root = render(
+      <SummaryTooltip category={category} gatherMode={reportResult.gatherMode}/>
+    );
+
+    const rating = root.getByTestId('SummaryTooltip__rating');
+    expect(rating.classList).toContain('SummaryTooltip__rating--pass');
+    expect(rating.textContent).toEqual('Good · 98');
+
+    expect(root.getByText('40 audits passed / 56 audits run')).toBeTruthy();
+  });
 });

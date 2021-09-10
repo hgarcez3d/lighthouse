@@ -29,7 +29,8 @@ export const SummaryTooltip: FunctionComponent<{
 }> = ({category, gatherMode}) => {
   const {numPassed, numAudits, totalWeight} = Util.calculateCategoryFraction(category);
 
-  const rating = Util.shouldDisplayAsFraction(gatherMode) ?
+  const displayAsFraction = Util.shouldDisplayAsFraction(gatherMode);
+  const rating = displayAsFraction ?
     Util.calculateRating(numPassed / numAudits) :
     Util.calculateRating(category.score);
 
@@ -47,7 +48,13 @@ export const SummaryTooltip: FunctionComponent<{
               className={`SummaryTooltip__rating SummaryTooltip__rating--${rating}`}
               data-testid="SummaryTooltip__rating"
             >
-              {totalWeight !== 0 && RATING_LABELS[rating]}
+              <span>{RATING_LABELS[rating]}</span>
+              {
+                !displayAsFraction && category.score && <>
+                  <span> · </span>
+                  <span>{category.score * 100}</span>
+                </>
+              }
             </div>
         }
       </div>
