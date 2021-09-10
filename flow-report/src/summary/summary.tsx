@@ -10,7 +10,7 @@ import {useMemo} from 'preact/hooks';
 import {FlowSegment} from '../common';
 import {getScreenDimensions, getScreenshot, useDerivedStepNames, useFlowResult} from '../util';
 import {Util} from '../../../report/renderer/util';
-import {CategoryScore} from '../wrappers/category-score';
+import {SummaryCategory} from './category';
 
 const DISPLAYED_CATEGORIES = ['performance', 'accessibility', 'best-practices', 'seo'];
 const THUMBNAIL_WIDTH = 50;
@@ -24,29 +24,6 @@ const SummaryNavigationHeader: FunctionComponent<{url: string}> = ({url}) => {
       <div className="SummaryNavigationHeader__category">Accessibility</div>
       <div className="SummaryNavigationHeader__category">Best Practices</div>
       <div className="SummaryNavigationHeader__category">SEO</div>
-    </div>
-  );
-};
-
-const SummaryCategory: FunctionComponent<{
-  category: LH.ReportResult.Category|undefined,
-  href: string,
-  gatherMode: LH.Result.GatherMode,
-}> = ({category, href, gatherMode}) => {
-  return (
-    <div className="SummaryCategory">
-      {
-        category ?
-          <CategoryScore
-            category={category}
-            href={href}
-            gatherMode={gatherMode}
-          /> :
-          <div
-            className="SummaryCategory__null"
-            data-testid="SummaryCategory__null"
-          />
-      }
     </div>
   );
 };
