@@ -91,8 +91,6 @@
     "serve-viewer": "yarn serve-gh-pages"
   },
   "devDependencies": {
-    "@babel/core": "^7.15.0",
-    "@babel/preset-env": "^7.15.0",
     "@build-tracker/cli": "^1.0.0-beta.15",
     "@firebase/app-types": "0.3.1",
     "@firebase/auth-types": "0.3.2",
@@ -132,7 +130,6 @@
     "@wardpeet/brfs": "2.1.0",
     "angular": "^1.7.4",
     "archiver": "^3.0.0",
-    "babel-jest": "^27.0.6",
     "browserify": "^17.0.0",
     "browserify-banner": "^1.0.15",
     "c8": "^7.4.0",
