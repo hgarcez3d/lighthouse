@@ -16,10 +16,20 @@
 /** @typedef {import('./lib/child-process-error.js').ChildProcessError} ChildProcessError */
 
 /**
+ * @typedef Run
+ * @property {string[] | undefined} networkRequests
+ * @property {LH.Result} lhr
+ * @property {LH.Artifacts} artifacts
+ * @property {string} lighthouseLog
+ * @property {string} assertionLog
+ */
+
+/**
  * @typedef SmokehouseResult
  * @property {string} id
  * @property {number} passed
  * @property {number} failed
+ * @property {Run[]} runs
  */
 
 import log from 'lighthouse-logger';
@@ -121,6 +131,8 @@ async function runSmokeTest(smokeTestDefn, testOptions) {
   console.log(`${purpleify(id)} smoketest starting…`);
 
   // Rerun test until there's a passing result or retries are exhausted to prevent flakes.
+  /** @type {Run[]} */
+  const runs = [];
   let result;
   let report;
   const bufferedConsole = new LocalConsole();
@@ -146,6 +158,13 @@ async function runSmokeTest(smokeTestDefn, testOptions) {
 
     // Assert result.
     report = getAssertionReport(result, expectations, {isDebug});
+
+    runs.push({
+      ...result,
+      lighthouseLog: result.log,
+      assertionLog: report.log,
+    });
+
     if (report.failed) {
       bufferedConsole.log(`  ${getAssertionLog(report.failed)} failed.`);
       continue; // Retry, if possible.
@@ -181,6 +200,7 @@ async function runSmokeTest(smokeTestDefn, testOptions) {
     id,
     passed,
     failed,
+    runs,
   };
 }
 

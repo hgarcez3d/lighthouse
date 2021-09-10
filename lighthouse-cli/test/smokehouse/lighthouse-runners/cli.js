@@ -13,7 +13,6 @@
  */
 
 import {promises as fs} from 'fs';
-import os from 'os';
 import {promisify} from 'util';
 import {execFile} from 'child_process';
 
@@ -34,9 +33,10 @@ const execFileAsync = promisify(execFile);
  * @return {Promise<{lhr: LH.Result, artifacts: LH.Artifacts, log: string}>}
  */
 async function runLighthouse(url, configJson, testRunnerOptions = {}) {
-  const tmpPath = await fs.mkdtemp(`${os.tmpdir()}/smokehouse-`);
-
   const {isDebug} = testRunnerOptions;
+  const tmpDir = `${LH_ROOT}/.tmp/smokehouse`;
+  await fs.mkdir(tmpDir, {recursive: true});
+  const tmpPath = await fs.mkdtemp(`${tmpDir}/smokehouse-`);
   return internalRun(url, tmpPath, configJson, testRunnerOptions)
     // Wait for internalRun() before removing scratch directory.
     .finally(() => !isDebug && fs.rmdir(tmpPath, {recursive: true}));
