@@ -15,6 +15,7 @@
 
 import path from 'path';
 import fs from 'fs';
+import url from 'url';
 
 import cloneDeep from 'lodash.clonedeep';
 import yargs from 'yargs';
@@ -184,7 +185,7 @@ async function begin() {
   let testDefnPath = argv.testsPath || coreTestDefnsPath;
   testDefnPath = path.resolve(process.cwd(), testDefnPath);
   const requestedTestIds = argv._;
-  let rawTestDefns = await import(testDefnPath);
+  let rawTestDefns = await import(url.pathToFileURL(testDefnPath).href);
   if (rawTestDefns) {
     // Support commonjs.
     rawTestDefns = rawTestDefns.default || rawTestDefns;
