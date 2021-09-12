@@ -32,6 +32,7 @@ class JsLibrariesAudit extends Audit {
     return {
       id: 'js-libraries',
       title: str_(UIStrings.title),
+      scoreDisplayMode: Audit.SCORING_MODES.INFORMATIVE,
       description: str_(UIStrings.description),
       requiredArtifacts: ['Stacks'],
     };
