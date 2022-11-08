@@ -5,43 +5,19 @@
  */
 
 import {createContext} from 'preact';
-import {useContext, useEffect, useMemo, useState} from 'preact/hooks';
+import {useContext, useEffect, useLayoutEffect, useMemo, useRef, useState} from 'preact/hooks';
 
-export const FlowResultContext = createContext<LH.FlowResult|undefined>(undefined);
+import type {UIStringsType} from './i18n/ui-strings';
+
+const FlowResultContext = createContext<LH.FlowResult|undefined>(undefined);
+const OptionsContext = createContext<LH.FlowReportOptions>({});
 
 function getHashParam(param: string): string|null {
   const params = new URLSearchParams(location.hash.replace('#', '?'));
   return params.get(param);
 }
 
-function shortenUrl(longUrl: string) {
-  const url = new URL(longUrl);
-  return `${url.hostname}${url.pathname}`;
-}
-
-/**
- * The step label should be enumerated if there is another report of the same gather mode in the same section.
- * Navigation reports will never be enumerated.
- */
-function shouldEnumerate(flowResult: LH.FlowResult, index: number) {
-  const {lhrs} = flowResult;
-  if (lhrs[index].gatherMode === 'navigation') return false;
-
-  for (let i = index + 1; lhrs[i] && lhrs[i].gatherMode !== 'navigation'; ++i) {
-    if (lhrs[i].gatherMode === lhrs[index].gatherMode) {
-      return true;
-    }
-  }
-  for (let i = index - 1; lhrs[i] && lhrs[i].gatherMode !== 'navigation'; --i) {
-    if (lhrs[i].gatherMode === lhrs[index].gatherMode) {
-      return true;
-    }
-  }
-  return false;
-}
-
-
-export function classNames(...args: Array<string|undefined|Record<string, boolean>>): string {
+function classNames(...args: Array<string|undefined|Record<string, boolean>>): string {
   const classes = [];
   for (const arg of args) {
     if (!arg) continue;
@@ -60,53 +36,70 @@ export function classNames(...args: Array<string|undefined|Record<string, boolea
   return classes.join(' ');
 }
 
-export function getScreenDimensions(reportResult: LH.ReportResult) {
+function getScreenDimensions(reportResult: LH.Result) {
   const {width, height} = reportResult.configSettings.screenEmulation;
   return {width, height};
 }
 
-export function getScreenshot(reportResult: LH.ReportResult) {
+function getFullPageScreenshot(reportResult: LH.Result) {
   const fullPageScreenshotAudit = reportResult.audits['full-page-screenshot'];
   const fullPageScreenshot =
-    fullPageScreenshotAudit.details &&
+    fullPageScreenshotAudit?.details &&
     fullPageScreenshotAudit.details.type === 'full-page-screenshot' &&
-    fullPageScreenshotAudit.details.screenshot.data;
+    fullPageScreenshotAudit.details;
 
   return fullPageScreenshot || null;
 }
 
-export function useFlowResult(): LH.FlowResult {
+function getFilmstripFrames(
+  reportResult: LH.Result
+): Array<{data: string}> | undefined {
+  const filmstripAudit = reportResult.audits['screenshot-thumbnails'];
+  if (!filmstripAudit) return undefined;
+
+  const frameItems =
+    filmstripAudit.details &&
+    filmstripAudit.details.type === 'filmstrip' &&
+    filmstripAudit.details.items;
+
+  return frameItems || undefined;
+}
+
+function getModeDescription(mode: LH.Result.GatherMode, strings: UIStringsType) {
+  switch (mode) {
+    case 'navigation': return strings.navigationDescription;
+    case 'timespan': return strings.timespanDescription;
+    case 'snapshot': return strings.snapshotDescription;
+  }
+}
+
+function useFlowResult(): LH.FlowResult {
   const flowResult = useContext(FlowResultContext);
   if (!flowResult) throw Error('useFlowResult must be called in the FlowResultContext');
   return flowResult;
 }
 
-export function useLocale(): LH.Locale {
-  const flowResult = useFlowResult();
-  return flowResult.lhrs[0].configSettings.locale;
-}
-
-export function useHashParam(param: string) {
-  const [paramValue, setParamValue] = useState(getHashParam(param));
+function useHashParams(...params: string[]) {
+  const [paramValues, setParamValues] = useState(params.map(getHashParam));
 
   // Use two-way-binding on the URL hash.
-  // Triggers a re-render if the param changes.
+  // Triggers a re-render if any param changes.
   useEffect(() => {
     function hashListener() {
-      const newIndexString = getHashParam(param);
-      if (newIndexString === paramValue) return;
-      setParamValue(newIndexString);
+      const newParamValues = params.map(getHashParam);
+      if (newParamValues.every((value, i) => value === paramValues[i])) return;
+      setParamValues(newParamValues);
     }
     window.addEventListener('hashchange', hashListener);
     return () => window.removeEventListener('hashchange', hashListener);
-  }, [paramValue]);
+  }, [paramValues]);
 
-  return paramValue;
+  return paramValues;
 }
 
-export function useCurrentLhr(): {value: LH.Result, index: number}|null {
+function useHashState(): LH.HashState|null {
   const flowResult = useFlowResult();
-  const indexString = useHashParam('index');
+  const [indexString, anchor] = useHashParams('index', 'anchor');
 
   // Memoize result so a new object is not created on every call.
   return useMemo(() => {
@@ -118,42 +111,57 @@ export function useCurrentLhr(): {value: LH.Result, index: number}|null {
       return null;
     }
 
-    const value = flowResult.lhrs[index];
-    if (!value) {
-      console.warn(`No LHR at index ${index}`);
+    const step = flowResult.steps[index];
+    if (!step) {
+      console.warn(`No flow step at index ${index}`);
       return null;
     }
 
-    return {value, index};
-  }, [indexString, flowResult]);
+    return {currentLhr: step.lhr, index, anchor};
+  }, [indexString, flowResult, anchor]);
 }
 
-export function useDerivedStepNames() {
-  const flowResult = useFlowResult();
+/**
+ * Creates a DOM subtree from non-preact code (e.g. LH report renderer).
+ * @param renderCallback Callback that renders a DOM subtree.
+ * @param inputs Changes to these values will trigger a re-render of the DOM subtree.
+ * @return Reference to the element that will contain the DOM subtree.
+ */
+function useExternalRenderer<T extends Element>(
+  renderCallback: () => Node,
+  inputs?: ReadonlyArray<unknown>
+) {
+  const ref = useRef<T>(null);
 
-  return useMemo(() => {
-    let numTimespan = 1;
-    let numSnapshot = 1;
+  useLayoutEffect(() => {
+    if (!ref.current) return;
 
-    return flowResult.lhrs.map((lhr, index) => {
-      const shortUrl = shortenUrl(lhr.finalUrl);
+    const root = renderCallback();
+    ref.current.append(root);
 
-      switch (lhr.gatherMode) {
-        case 'navigation':
-          numTimespan = 1;
-          numSnapshot = 1;
-          return `Navigation report (${shortUrl})`;
-        case 'timespan':
-          if (shouldEnumerate(flowResult, index)) {
-            return `Timespan report ${numTimespan++} (${shortUrl})`;
-          }
-          return `Timespan report (${shortUrl})`;
-        case 'snapshot':
-          if (shouldEnumerate(flowResult, index)) {
-            return `Snapshot report ${numSnapshot++} (${shortUrl})`;
-          }
-          return `Snapshot report (${shortUrl})`;
-      }
-    });
-  }, [flowResult]);
+    return () => {
+      if (ref.current?.contains(root)) ref.current.removeChild(root);
+    };
+  }, inputs);
+
+  return ref;
 }
+
+function useOptions() {
+  return useContext(OptionsContext);
+}
+
+export {
+  FlowResultContext,
+  OptionsContext,
+  classNames,
+  getScreenDimensions,
+  getFullPageScreenshot,
+  getFilmstripFrames,
+  getModeDescription,
+  useFlowResult,
+  useHashParams,
+  useHashState,
+  useExternalRenderer,
+  useOptions,
+};

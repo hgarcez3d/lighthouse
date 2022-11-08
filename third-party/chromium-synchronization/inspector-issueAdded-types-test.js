@@ -5,21 +5,19 @@
  */
 'use strict';
 
-const fs = require('fs');
-const fetch = require('node-fetch');
-const {LH_ROOT} = require('../../../root.js');
+import fs from 'fs';
+import fetch from 'node-fetch';
+import { LH_ROOT } from '../../root.js';
 
 const inspectorIssuesGathererPath = LH_ROOT +
-  '/lighthouse-core/gather/gatherers/inspector-issues.js';
+  '/core/gather/gatherers/inspector-issues.js';
 const inspectorIssuesGathererSource = fs.readFileSync(inspectorIssuesGathererPath, 'utf-8');
-
-/* eslint-env jest */
 
 describe('issueAdded types', () => {
   /** @type {Array<LH.Crdp.Audits.InspectorIssueDetails>} */
   let inspectorIssueDetailsTypes;
 
-  beforeAll(async () => {
+  before(async () => {
     const browserProtocolUrl =
       'https://raw.githubusercontent.com/ChromeDevTools/devtools-protocol/master/json/browser_protocol.json';
     const json = await fetch(browserProtocolUrl).then(r => r.json());
@@ -33,18 +31,29 @@ describe('issueAdded types', () => {
 
   it('should notify us if something changed', () => {
     expect(inspectorIssueDetailsTypes).toMatchInlineSnapshot(`
-      Array [
-        "blockedByResponseIssueDetails",
-        "contentSecurityPolicyIssueDetails",
-        "heavyAdIssueDetails",
-        "mixedContentIssueDetails",
-        "sameSiteCookieIssueDetails",
-        "sharedArrayBufferTransferIssueDetails",
-      ]
-    `);
+Array [
+  "attributionReportingIssueDetails",
+  "blockedByResponseIssueDetails",
+  "clientHintIssueDetails",
+  "contentSecurityPolicyIssueDetails",
+  "cookieIssueDetails",
+  "corsIssueDetails",
+  "deprecationIssueDetails",
+  "federatedAuthRequestIssueDetails",
+  "genericIssueDetails",
+  "heavyAdIssueDetails",
+  "lowTextContrastIssueDetails",
+  "mixedContentIssueDetails",
+  "navigatorUserAgentIssueDetails",
+  "quirksModeIssueDetails",
+  "sharedArrayBufferIssueDetails",
+  "twaQualityEnforcementDetails",
+]
+`);
   });
 
-  it('are each handled explicitly in the gatherer', () => {
+  // TODO: https://github.com/GoogleChrome/lighthouse/issues/13147
+  it.skip('are each handled explicitly in the gatherer', () => {
     // Regex relies on the typecasts
     const sourceTypeMatches = inspectorIssuesGathererSource.matchAll(
       /LH\.Crdp\.Audits\.(.*?Details)>/g

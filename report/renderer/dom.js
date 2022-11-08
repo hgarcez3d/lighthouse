@@ -14,7 +14,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-'use strict';
 
 /* eslint-env browser */
 
@@ -27,14 +26,18 @@ import {createComponent} from './components.js';
 export class DOM {
   /**
    * @param {Document} document
+   * @param {HTMLElement} rootEl
    */
-  constructor(document) {
+  constructor(document, rootEl) {
     /** @type {Document} */
     this._document = document;
     /** @type {string} */
     this._lighthouseChannel = 'unknown';
     /** @type {Map<string, DocumentFragment>} */
     this._componentCache = new Map();
+    /** @type {HTMLElement} */
+    // For legacy Report API users, this'll be undefined, but set in renderReport
+    this.rootEl = rootEl;
   }
 
   /**
@@ -77,6 +80,15 @@ export class DOM {
   }
 
   /**
+   * @param {string} data
+   * @return {!Node}
+   */
+  createTextNode(data) {
+    return this._document.createTextNode(data);
+  }
+
+
+  /**
    * @template {string} T
    * @param {Element} parentElem
    * @param {T} elementName
@@ -85,7 +97,7 @@ export class DOM {
    */
   createChildOf(parentElem, elementName, className) {
     const element = this.createElement(elementName, className);
-    parentElem.appendChild(element);
+    parentElem.append(element);
     return element;
   }
 
@@ -121,16 +133,20 @@ export class DOM {
     const element = this.createElement('span');
 
     for (const segment of Util.splitMarkdownLink(text)) {
+      const processedSegment = segment.text.includes('`') ?
+        this.convertMarkdownCodeSnippets(segment.text) :
+        segment.text;
+
       if (!segment.isLink) {
         // Plain text segment.
-        element.appendChild(this._document.createTextNode(segment.text));
+        element.append(processedSegment);
         continue;
       }
 
       // Otherwise, append any links found.
       const url = new URL(segment.linkHref);
 
-      const DOCS_ORIGINS = ['https://developers.google.com', 'https://web.dev'];
+      const DOCS_ORIGINS = ['https://developers.google.com', 'https://web.dev', 'https://developer.chrome.com'];
       if (DOCS_ORIGINS.includes(url.origin)) {
         url.searchParams.set('utm_source', 'lighthouse');
         url.searchParams.set('utm_medium', this._lighthouseChannel);
@@ -139,9 +155,9 @@ export class DOM {
       const a = this.createElement('a');
       a.rel = 'noopener';
       a.target = '_blank';
-      a.textContent = segment.text;
+      a.append(processedSegment);
       this.safelySetHref(a, url.href);
-      element.appendChild(a);
+      element.append(a);
     }
 
     return element;
@@ -198,9 +214,9 @@ export class DOM {
       if (segment.isCode) {
         const pre = this.createElement('code');
         pre.textContent = segment.text;
-        element.appendChild(pre);
+        element.append(pre);
       } else {
-        element.appendChild(this._document.createTextNode(segment.text));
+        element.append(this._document.createTextNode(segment.text));
       }
     }
 
@@ -216,6 +232,8 @@ export class DOM {
   }
 
   /**
+   * ONLY use if `dom.rootEl` isn't sufficient for your needs. `dom.rootEl` is preferred
+   * for all scoping, because a document can have multiple reports within it.
    * @return {Document}
    */
   document() {
@@ -270,5 +288,22 @@ export class DOM {
   fireEventOn(name, target = this._document, detail) {
     const event = new CustomEvent(name, detail ? {detail} : undefined);
     target.dispatchEvent(event);
+  }
+
+  /**
+   * Downloads a file (blob) using a[download].
+   * @param {Blob|File} blob The file to save.
+   * @param {string} filename
+   */
+  saveFile(blob, filename) {
+    const a = this.createElement('a');
+    a.download = filename;
+    this.safelySetBlobHref(a, blob);
+    this._document.body.append(a); // Firefox requires anchor to be in the DOM.
+    a.click();
+
+    // cleanup.
+    this._document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(a.href), 500);
   }
 }

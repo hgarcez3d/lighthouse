@@ -3,15 +3,14 @@
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
  */
-'use strict';
 
-import {strict as assert} from 'assert';
+import assert from 'assert/strict';
 
 import {Util} from '../../renderer/util.js';
 import {I18n} from '../../renderer/i18n.js';
-import sampleResult from '../../../lighthouse-core/test/results/sample_v2.json';
+import {readJson} from '../../../core/test/test-utils.js';
 
-/* eslint-env jest */
+const sampleResult = readJson('../../../core/test/results/sample_v2.json', import.meta);
 
 describe('util helpers', () => {
   beforeEach(() => {
@@ -57,7 +56,7 @@ describe('util helpers', () => {
     });
 
     // eslint-disable-next-line max-len
-    assert.equal(descriptions.networkThrottling, '565\xa0ms HTTP RTT, 1,400\xa0Kbps down, 600\xa0Kbps up (DevTools)');
+    assert.equal(descriptions.networkThrottling, '565\xa0ms HTTP RTT, 1,400\xa0kb/s down, 600\xa0kb/s up (DevTools)');
     assert.equal(descriptions.cpuThrottling, '4.5x slowdown (DevTools)');
   });
 
@@ -72,7 +71,7 @@ describe('util helpers', () => {
     });
 
     // eslint-disable-next-line max-len
-    assert.equal(descriptions.networkThrottling, '150\xa0ms TCP RTT, 1,600\xa0Kbps throughput (Simulated)');
+    assert.equal(descriptions.networkThrottling, '150\xa0ms TCP RTT, 1,600\xa0kb/s throughput (Simulated)');
     assert.equal(descriptions.cpuThrottling, '2x slowdown (Simulated)');
   });
 
@@ -154,6 +153,53 @@ describe('util helpers', () => {
         // Original audit results should be restored.
         const preparedResult = Util.prepareReportResult(clonedSampleResult);
         assert.deepStrictEqual(preparedResult.audits, sampleResult.audits);
+      });
+
+      it('corrects performance category without hidden group', () => {
+        const clonedSampleResult = JSON.parse(JSON.stringify(sampleResult));
+
+        clonedSampleResult.lighthouseVersion = '8.6.0';
+        delete clonedSampleResult.categoryGroups['hidden'];
+        for (const auditRef of clonedSampleResult.categories['performance'].auditRefs) {
+          if (auditRef.group === 'hidden') {
+            delete auditRef.group;
+          } else if (!auditRef.group) {
+            auditRef.group = 'diagnostics';
+          }
+        }
+        assert.notDeepStrictEqual(clonedSampleResult.categories, sampleResult.categories);
+        assert.notDeepStrictEqual(clonedSampleResult.categoryGroups, sampleResult.categoryGroups);
+
+        // Original audit results should be restored.
+        const clonedPreparedResult = Util.prepareReportResult(clonedSampleResult);
+        const preparedResult = Util.prepareReportResult(sampleResult);
+        assert.deepStrictEqual(clonedPreparedResult.categories, preparedResult.categories);
+        assert.deepStrictEqual(clonedPreparedResult.categoryGroups, preparedResult.categoryGroups);
+      });
+
+      it('converts old opportunity table column headings to consolidated table headings', () => {
+        const clonedSampleResult = JSON.parse(JSON.stringify(sampleResult));
+
+        const auditsWithTableDetails = Object.values(clonedSampleResult.audits)
+          .filter(audit => audit.details?.type === 'table');
+        assert.notEqual(auditsWithTableDetails.length, 0);
+        for (const audit of auditsWithTableDetails) {
+          for (const heading of audit.details.headings) {
+            heading.itemType = heading.valueType;
+            heading.text = heading.label;
+            delete heading.valueType;
+            delete heading.label;
+
+            if (heading.subItemsHeading) {
+              heading.subItemsHeading.itemType = heading.subItemsHeading.valueType;
+              // @ts-expect-error
+              delete heading.subItemsHeading.valueType;
+            }
+          }
+        }
+
+        const preparedResult = Util.prepareReportResult(clonedSampleResult);
+        assert.deepStrictEqual(sampleResult.audits, preparedResult.audits);
       });
     });
 
@@ -384,6 +430,74 @@ describe('util helpers', () => {
         {isLink: true, text: 'second link', linkHref: 'https://second.com'},
         {isLink: false, text: ' and scene'},
       ]);
+    });
+  });
+
+  describe('#shouldDisplayAsFraction', () => {
+    it('returns true for timespan and snapshot', () => {
+      expect(Util.shouldDisplayAsFraction('navigation')).toEqual(false);
+      expect(Util.shouldDisplayAsFraction('timespan')).toEqual(true);
+      expect(Util.shouldDisplayAsFraction('snapshot')).toEqual(true);
+      expect(Util.shouldDisplayAsFraction(undefined)).toEqual(false);
+    });
+  });
+
+  describe('#calculateCategoryFraction', () => {
+    it('returns passed audits and total audits', () => {
+      const category = {
+        id: 'performance',
+        auditRefs: [
+          {weight: 3, result: {score: 1, scoreDisplayMode: 'binary'}, group: 'metrics'},
+          {weight: 2, result: {score: 1, scoreDisplayMode: 'binary'}, group: 'metrics'},
+          {weight: 0, result: {score: 1, scoreDisplayMode: 'binary'}, group: 'metrics'},
+          {weight: 1, result: {score: 0, scoreDisplayMode: 'binary'}, group: 'metrics'},
+        ],
+      };
+      const fraction = Util.calculateCategoryFraction(category);
+      expect(fraction).toEqual({
+        numPassableAudits: 4,
+        numPassed: 3,
+        numInformative: 0,
+        totalWeight: 6,
+      });
+    });
+
+    it('ignores manual audits, N/A audits, and hidden audits', () => {
+      const category = {
+        id: 'performance',
+        auditRefs: [
+          {weight: 1, result: {score: 1, scoreDisplayMode: 'binary'}, group: 'metrics'},
+          {weight: 1, result: {score: 1, scoreDisplayMode: 'binary'}, group: 'hidden'},
+          {weight: 1, result: {score: 0, scoreDisplayMode: 'manual'}, group: 'metrics'},
+          {weight: 1, result: {score: 0, scoreDisplayMode: 'notApplicable'}, group: 'metrics'},
+        ],
+      };
+      const fraction = Util.calculateCategoryFraction(category);
+      expect(fraction).toEqual({
+        numPassableAudits: 1,
+        numPassed: 1,
+        numInformative: 0,
+        totalWeight: 1,
+      });
+    });
+
+    it('tracks informative audits separately', () => {
+      const category = {
+        id: 'performance',
+        auditRefs: [
+          {weight: 1, result: {score: 1, scoreDisplayMode: 'binary'}, group: 'metrics'},
+          {weight: 1, result: {score: 1, scoreDisplayMode: 'binary'}, group: 'metrics'},
+          {weight: 0, result: {score: 1, scoreDisplayMode: 'informative'}, group: 'metrics'},
+          {weight: 1, result: {score: 0, scoreDisplayMode: 'informative'}, group: 'metrics'},
+        ],
+      };
+      const fraction = Util.calculateCategoryFraction(category);
+      expect(fraction).toEqual({
+        numPassableAudits: 2,
+        numPassed: 2,
+        numInformative: 2,
+        totalWeight: 2,
+      });
     });
   });
 });

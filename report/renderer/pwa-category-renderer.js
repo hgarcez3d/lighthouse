@@ -14,7 +14,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-'use strict';
 
 import {Util} from './util.js';
 import {CategoryRenderer} from './category-renderer.js';
@@ -27,8 +26,8 @@ export class PwaCategoryRenderer extends CategoryRenderer {
    */
   render(category, groupDefinitions = {}) {
     const categoryElem = this.dom.createElement('div', 'lh-category');
-    this.createPermalinkSpan(categoryElem, category.id);
-    categoryElem.appendChild(this.renderCategoryHeader(category, groupDefinitions));
+    categoryElem.id = category.id;
+    categoryElem.append(this.renderCategoryHeader(category, groupDefinitions));
 
     const auditRefs = category.auditRefs;
 
@@ -36,25 +35,15 @@ export class PwaCategoryRenderer extends CategoryRenderer {
     // all put in a top-level clump that isn't expandable/collapsible.
     const regularAuditRefs = auditRefs.filter(ref => ref.result.scoreDisplayMode !== 'manual');
     const auditsElem = this._renderAudits(regularAuditRefs, groupDefinitions);
-    categoryElem.appendChild(auditsElem);
+    categoryElem.append(auditsElem);
 
     // Manual audits are still in a manual clump.
     const manualAuditRefs = auditRefs.filter(ref => ref.result.scoreDisplayMode === 'manual');
     const manualElem = this.renderClump('manual',
       {auditRefs: manualAuditRefs, description: category.manualDescription});
-    categoryElem.appendChild(manualElem);
+    categoryElem.append(manualElem);
 
     return categoryElem;
-  }
-
-  /**
-   * Alias for backcompat.
-   * @param {LH.ReportResult.Category} category
-   * @param {Record<string, LH.Result.ReportGroup>} groupDefinitions
-   * @return {DocumentFragment}
-   */
-  renderScoreGauge(category, groupDefinitions) {
-    return this.renderCategoryScore(category, groupDefinitions);
   }
 
   /**
@@ -70,7 +59,6 @@ export class PwaCategoryRenderer extends CategoryRenderer {
 
     const tmpl = this.dom.createComponent('gaugePwa');
     const wrapper = this.dom.find('a.lh-gauge--pwa__wrapper', tmpl);
-    this.dom.safelySetHref(wrapper, `#${category.id}`);
 
     // Correct IDs in case multiple instances end up in the page.
     const svgRoot = tmpl.querySelector('svg');
